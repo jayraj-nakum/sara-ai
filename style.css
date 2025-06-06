@@ -122,3 +122,33 @@ header {
     transform: translateY(0);
   }
 }
+
+
+.message.bot {
+  background: #2c2c2c;
+  padding: 10px;
+  margin: 10px;
+  border-radius: 12px;
+  max-width: 80%;
+  align-self: flex-start;
+  position: relative;
+}
+
+.bot-actions {
+  margin-top: 8px;
+}
+
+.speak-btn {
+  background-color: #444;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.speak-btn:hover {
+  background-color: #666;
+}

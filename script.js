@@ -120,7 +120,7 @@ async function handleUserInput(text) {
     setTimeout(() => {
       addBotMessage(aiResponse);
       speak(aiResponse);
-    }, 1000);
+    }, 100);
   }
 }
 
@@ -176,7 +176,35 @@ function removeLastBotMessage() {
 function createMessageBubble(text, sender) {
   const bubble = document.createElement("div");
   bubble.classList.add("message", sender);
-  bubble.innerHTML = `${text}<div class="timestamp">${getTime()}</div>`;
+
+  // Message content
+  const content = document.createElement("div");
+  content.className = "message-text";
+  content.innerHTML = text;
+
+  // Timestamp
+  const timestamp = document.createElement("div");
+  timestamp.className = "timestamp";
+  timestamp.textContent = getTime();
+
+  bubble.appendChild(content);
+
+  // Add speaker button below only for bot replies
+  if (sender === "bot") {
+    const speakerBtn = document.createElement("button");
+    speakerBtn.className = "speak-btn";
+    speakerBtn.title = "Speak again";
+    speakerBtn.textContent = "🔊";
+    speakerBtn.onclick = () => speak(text);
+
+    const actionBar = document.createElement("div");
+    actionBar.className = "bot-actions";
+    actionBar.appendChild(speakerBtn);
+
+    bubble.appendChild(actionBar);
+  }
+
+  bubble.appendChild(timestamp);
   return bubble;
 }
 
