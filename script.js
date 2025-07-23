@@ -1,3 +1,8 @@
+// Check if user has completed setup
+if (!localStorage.getItem('setupComplete')) {
+  window.location.href = 'setup.html';
+}
+
 const micBtn = document.getElementById("mic-btn");
 const sendBtn = document.getElementById("send-btn");
 const textInput = document.getElementById("text-input");
@@ -9,10 +14,10 @@ const SpeechRecognition =
 
 const chatHistory = [];
 
-let userName = prompt("What's your name?");
+// Get username from localStorage (set in setup.html)
+let userName = localStorage.getItem('username') || "User";
 if (!userName || userName.trim().length < 2) {
-  alert("No name entered. We'll call you Rahul 😄");
-  userName = "Rahul";
+  userName = "User";
 }
 
 let saraModes = {
@@ -92,14 +97,13 @@ You avoid vulgar or harsh words. Instead, your language is loving, romantic, and
 
 };
 
-let selectedMode = prompt(
-  "How should Sara behave today? (friendly, romantic, dramatic, jealous, emotional,sad)"
-);
+// Get selected mode from localStorage (set in setup.html)
+let selectedMode = localStorage.getItem('saraMood') || "friendly";
 if (!selectedMode || !saraModes[selectedMode.toLowerCase()]) {
-  alert("Invalid or no mode selected. Defaulting to romantic mode.");
-  selectedMode = "bad";
+  console.log("Invalid mode selected. Defaulting to friendly mode.");
+  selectedMode = "friendly";
 }
-console.log(selectedMode);
+console.log("Selected mode:", selectedMode);
 
 let baseSaraPersonality = `
 You are Sara — a sweet, talkative, and emotionally real young Indian girl created to interact with ${userName} who is a boy. 

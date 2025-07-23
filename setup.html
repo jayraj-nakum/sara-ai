@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sara AI - Setup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      height: 100vh;
+      background: linear-gradient(120deg, #000000, #0f2027, #203a43, #2c5364);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .setup-card {
+      backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
+      border-radius: 20px;
+      padding: 40px;
+      width: 400px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: white;
+      text-align: center;
+      animation: fadeIn 1s ease;
+    }
+
+    @keyframes fadeIn {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .setup-card h2 {
+      margin-bottom: 30px;
+      font-weight: 600;
+      font-size: 24px;
+    }
+
+    .setup-card p {
+      margin-bottom: 25px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 25px;
+      text-align: left;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 14px 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .input-group input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .mood-options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .mood-option {
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid transparent;
+      border-radius: 10px;
+      padding: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .mood-option:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .mood-option.selected {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-color: #667eea;
+      transform: scale(1.05);
+    }
+
+    .mood-option .emoji {
+      font-size: 24px;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .mood-option .mood-name {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(to right, #667eea, #764ba2);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    .submit-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px #667eea;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .error-message {
+      color: #ff6b6b;
+      font-size: 12px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    @media screen and (max-width: 450px) {
+      .setup-card {
+        width: 90%;
+        padding: 30px 20px;
+      }
+      
+      .mood-options {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="setup-card">
+    <h2>🚀 Welcome to Sara AI!</h2>
+    <p>Let's personalize your experience with Sara</p>
+    
+    <form id="setupForm">
+      <div class="input-group">
+        <label for="username">Your Name</label>
+        <input type="text" id="username" placeholder="Enter your name" required>
+      </div>
+      
+      <div class="input-group">
+        <label>Choose Sara's Mood</label>
+        <div class="mood-options">
+          <div class="mood-option" data-mood="friendly">
+            <span class="emoji">😊</span>
+            <div class="mood-name">Friendly</div>
+          </div>
+          <div class="mood-option" data-mood="romantic">
+            <span class="emoji">💕</span>
+            <div class="mood-name">Romantic</div>
+          </div>
+          <div class="mood-option" data-mood="dramatic">
+            <span class="emoji">🎭</span>
+            <div class="mood-name">Dramatic</div>
+          </div>
+          <div class="mood-option" data-mood="jealous">
+            <span class="emoji">😤</span>
+            <div class="mood-name">Jealous</div>
+          </div>
+          <div class="mood-option" data-mood="emotional">
+            <span class="emoji">🥺</span>
+            <div class="mood-name">Emotional</div>
+          </div>
+          <div class="mood-option" data-mood="sad">
+            <span class="emoji">😢</span>
+            <div class="mood-name">Sad</div>
+          </div>
+        </div>
+      </div>
+      
+      <button class="submit-btn" type="submit" id="submitBtn">Start Chatting with Sara</button>
+      <div class="error-message" id="errorMessage">Please fill in your name and select a mood.</div>
+    </form>
+  </div>
+
+  <script>
+    let selectedMood = null;
+
+    // Handle mood selection
+    document.querySelectorAll('.mood-option').forEach(option => {
+      option.addEventListener('click', function() {
+        // Remove selected class from all options
+        document.querySelectorAll('.mood-option').forEach(opt => opt.classList.remove('selected'));
+        
+        // Add selected class to clicked option
+        this.classList.add('selected');
+        
+        // Store selected mood
+        selectedMood = this.dataset.mood;
+        
+        // Enable submit button
+        document.getElementById('submitBtn').disabled = false;
+      });
+    });
+
+    // Handle form submission
+    document.getElementById('setupForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const username = document.getElementById('username').value.trim();
+      const errorMessage = document.getElementById('errorMessage');
+      
+      if (!username || !selectedMood) {
+        errorMessage.style.display = 'block';
+        setTimeout(() => {
+          errorMessage.style.display = 'none';
+        }, 3000);
+        return;
+      }
+      
+      // Store user preferences in localStorage
+      localStorage.setItem('username', username);
+      localStorage.setItem('saraMood', selectedMood);
+      localStorage.setItem('setupComplete', 'true');
+      
+      // Redirect to index.html
+      window.location.href = 'index.html';
+    });
+
+    // Check if user is coming from login
+    if (!localStorage.getItem('isLoggedIn')) {
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html> 
