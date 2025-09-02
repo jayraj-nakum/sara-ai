@@ -111,31 +111,97 @@ textInput.addEventListener("keydown", async (event) => {
 
 async function handleUserInput(text) {
   addUserMessage(text);
-  const response = await getGeminiResponse();
-
-  if (response) {
-    const data = await response.json();
-    const aiResponse = data.candidates[0].content.parts[0].text;
-
-    setTimeout(() => {
-      addBotMessage(aiResponse);
-      speak(aiResponse);
-    }, 100);
+  
+  // Show loading message
+  const loadingId = addLoadingMessage();
+  
+  try {
+    const response = await getGeminiResponseWithRetry();
+    
+    // Remove loading message
+    removeLoadingMessage(loadingId);
+    
+    if (response && response.ok) {
+      const data = await response.json();
+      
+      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+        const aiResponse = data.candidates[0].content.parts[0].text;
+        setTimeout(() => {
+          addBotMessage(aiResponse);
+          speak(aiResponse);
+        }, 100);
+      } else {
+        addBotMessage("Sorry, I'm having trouble responding right now.");
+      }
+    } else if (response && response.status === 429) {
+      addBotMessage("Too many requests! Please wait a moment and try again.");
+    } else {
+      addBotMessage("Sorry, I'm having trouble connecting. Please try again.");
+    }
+  } catch (error) {
+    removeLoadingMessage(loadingId);
+    console.error('Error:', error);
+    addBotMessage("Something went wrong. Please try again.");
   }
 }
 
-async function getGeminiResponse() {
-  return await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemInstruction }] },
-        contents: chatHistory,
-      }),
+async function getGeminiResponseWithRetry(retryCount = 0) {
+  const maxRetries = 3;
+  const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+  
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: systemInstruction }] },
+          contents: chatHistory,
+        }),
+      }
+    );
+
+    if (response.status === 429 && retryCount < maxRetries) {
+      console.log(`Rate limited. Retrying in ${delay}ms... (Attempt ${retryCount + 1}/${maxRetries})`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return getGeminiResponseWithRetry(retryCount + 1);
     }
-  );
+
+    return response;
+  } catch (error) {
+    if (retryCount < maxRetries) {
+      console.log(`Network error. Retrying in ${delay}ms... (Attempt ${retryCount + 1}/${maxRetries})`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return getGeminiResponseWithRetry(retryCount + 1);
+    }
+    throw error;
+  }
+}
+
+// Loading message functions
+function addLoadingMessage() {
+  const loadingId = 'loading-' + Date.now();
+  const bubble = document.createElement("div");
+  bubble.classList.add("message", "bot", "loading");
+  bubble.id = loadingId;
+  
+  const content = document.createElement("div");
+  content.className = "message-text";
+  content.innerHTML = "Sara is typing... <span class='typing-dots'>...</span>";
+  
+  bubble.appendChild(content);
+  chatBody.appendChild(bubble);
+  chatBody.scrollTop = chatBody.scrollHeight;
+  
+  return loadingId;
+}
+
+function removeLoadingMessage(loadingId) {
+  const loadingElement = document.getElementById(loadingId);
+  if (loadingElement) {
+    loadingElement.remove();
+  }
 }
 
 function speak(text) {
