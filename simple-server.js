@@ -10,7 +10,7 @@ app.use(express.json());
 const dbConfig = {
     host: 'ballast.proxy.rlwy.net',
     user: 'root',
-    password: 'qZZWUAXktbmLIjQVEdsAbBuPtZbOJcPb', // Replace with your actual password from Railway
+    password: 'AIzaSyBn2_gAI6bGLzd-7OllnIYtkLd59Ggq4Ow', // Replace with your actual password from Railway
     database: 'railway',
     port: 51706
 };
