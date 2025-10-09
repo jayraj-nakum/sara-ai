@@ -158,7 +158,8 @@ async function getGeminiResponseWithRetry(retryCount = 0) {
         body: JSON.stringify({
           system_instruction: { parts: [{ text: systemInstruction }] },
           contents: chatHistory,
-        }),
+        tools: [{ googleSearch: {} }]
+        })
       }
     );
 
