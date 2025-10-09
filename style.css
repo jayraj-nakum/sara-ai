@@ -169,3 +169,68 @@ header {
 .message.loading {
   opacity: 0.7;
 }
+
+/* AI Conversation Controls */
+.ai-conversation-control {
+  background-color: var(--foreground);
+  padding: 0.8rem 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  border-top: 1px solid #2a2a2a;
+}
+
+.ai-conversation-control button {
+  font-size: 0.95rem;
+  background-color: #6a11cb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+}
+
+.ai-conversation-control button:hover:not(:disabled) {
+  background-color: #5a0fb0;
+  transform: scale(1.05);
+}
+
+.ai-conversation-control button:disabled {
+  background-color: #444;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.ai-conversation-control button#stop-ai-conversation {
+  background-color: #ff4b5c;
+}
+
+.ai-conversation-control button#stop-ai-conversation:hover:not(:disabled) {
+  background-color: #e04050;
+}
+
+/* AI Girlfriend and Boyfriend message styles */
+.message.ai-girlfriend {
+  align-self: flex-start;
+  background: linear-gradient(to right, #ff6ec4, #ff4b9d);
+  color: white;
+  border-bottom-left-radius: 0;
+}
+
+.message.ai-boyfriend {
+  align-self: flex-end;
+  background: linear-gradient(to right, #4b7bff, #2575fc);
+  color: white;
+  border-bottom-right-radius: 0;
+}
+
+.message .character-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 0.3rem;
+  opacity: 0.9;
+}

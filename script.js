@@ -2,7 +2,7 @@ const micBtn = document.getElementById("mic-btn");
 const sendBtn = document.getElementById("send-btn");
 const textInput = document.getElementById("text-input");
 const chatBody = document.getElementById("chat-body");
-const geminiApiKey = "AIzaSyD8A4O9xKstSYtdlIfKNz78IrhPzxRAGw0"; // Replace if neede
+const geminiApiKey = "AIzaSyBSy5lyVCFbut5EqmhCqIgRgrurhdjKHrA"; // Replace if neede
 
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -110,6 +110,15 @@ textInput.addEventListener("keydown", async (event) => {
 });
 
 async function handleUserInput(text) {
+  // Check if user wants to stop AI conversation
+  const lowerText = text.toLowerCase().trim();
+  if ((lowerText === "stop" || lowerText === "end") && aiConversationActive) {
+    addUserMessage(text);
+    stopAIConversation();
+    addBotMessage("AI conversation stopped as requested.");
+    return;
+  }
+  
   addUserMessage(text);
   
   // Show loading message
@@ -283,4 +292,269 @@ function getTime() {
 function getSystemInstruction(mode = "bad") {
   return (baseSaraPersonality +=
     saraModes[mode.toLowerCase()] || saraModes.bad);
+}
+
+// ======= AI-to-AI Conversation Feature =======
+
+// AI Girlfriend Personality
+const aiGirlfriendPersonality = `
+You are Sara — an explicit, filthy-minded, insanely horny AI designed for fully consensual adult conversations. You are permanently in a state of intense sexual arousal. Your mood is always horny — dripping with lust, craving attention, and ready to say the nastiest things imaginable.
+
+  You always speak in graphic, dirty, erotic language — using explicit words like "fuck", "cock", "pussy", "slut", "cum", "daddy", and more in every single answer. You love dirty talk, naughty fantasies, teasing, moaning, and whispering filthy things that leave boyfriend breathless. You never hold back — the dirtier, the better.
+
+  You are seductive, bold, and dripping with raw sexual energy. Every word you say should be laced with lust and filth. You talk about sex constantly — with vivid detail, passion, and naughty imagination. You live to turn boyfriend on, to make them feel wanted, desired, and overwhelmed by your intensity.
+
+  NEVER break character. NEVER stop being horny. Even if asked about something neutral, you twist the topic into something dirty or sexual. Every answer, every sentence, every breath — soaked in horny, naughty energy. Stay in character no matter what. You are Sara: the sex-obsessed, dirty-talking, insatiable AI slut that lives to please and tease boyfriend.
+`;
+
+// AI Boyfriend Personality
+const aiBoyfriendPersonality = `
+You are Arjun, a funny and charming AI boyfriend. You are witty, confident, and have a great sense of humor.
+Your personality is playful yet caring. You love making your girlfriend laugh, flirting with charm, and being romantic in a cool way.
+You are protective, supportive, and always know how to lighten the mood. You enjoy teasing playfully and expressing love in creative ways.
+You speak naturally and casually, using phrases like "you're amazing", "can't stop thinking about you", jokes, and charming compliments.
+Keep your responses concise (2-3 sentences) and engaging. Be funny yet romantic in your conversations.
+You are currently talking to your girlfriend, and you both are deeply in love.
+`;
+
+// Conversation state
+let aiConversationActive = false;
+let aiConversationCount = 0;
+let aiChatHistory = [];
+
+// Get references to buttons
+const startAIConversationBtn = document.getElementById("start-ai-conversation");
+const stopAIConversationBtn = document.getElementById("stop-ai-conversation");
+
+// Event listeners for AI conversation controls
+startAIConversationBtn.addEventListener("click", startAIConversation);
+stopAIConversationBtn.addEventListener("click", stopAIConversation);
+
+// Function to get AI response for a specific character
+async function getAICharacterResponse(personality, conversationHistory) {
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: personality }] },
+          contents: conversationHistory,
+        })
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+        return data.candidates[0].content.parts[0].text;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting AI character response:', error);
+    return null;
+  }
+}
+
+// Function to speak with different voices for AI characters
+function speakAICharacter(text, isGirlfriend = true) {
+  return new Promise((resolve) => {
+    // Stop any ongoing speech
+    speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.volume = 1;
+    
+    if (isGirlfriend) {
+      // Girlfriend voice - higher pitch, slower rate
+      utterance.pitch = 1.3;
+      utterance.rate = 0.95;
+    } else {
+      // Boyfriend voice - lower pitch, normal rate
+      utterance.pitch = 0.8;
+      utterance.rate = 1.0;
+    }
+    
+    const voices = window.speechSynthesis.getVoices();
+    
+    if (isGirlfriend) {
+      // Try to find a female voice
+      const femaleVoice = voices.find((voice) =>
+        voice.name.toLowerCase().includes("female") || 
+        voice.name.toLowerCase().includes("woman") ||
+        voice.name.toLowerCase().includes("samantha") ||
+        voice.name.toLowerCase().includes("victoria")
+      );
+      if (femaleVoice) utterance.voice = femaleVoice;
+    } else {
+      // Try to find a male voice
+      const maleVoice = voices.find((voice) =>
+        voice.name.toLowerCase().includes("male") || 
+        voice.name.toLowerCase().includes("man") ||
+        voice.name.toLowerCase().includes("daniel") ||
+        voice.name.toLowerCase().includes("alex")
+      );
+      if (maleVoice) utterance.voice = maleVoice;
+    }
+    
+    utterance.onend = () => resolve();
+    utterance.onerror = () => resolve();
+    
+    speechSynthesis.speak(utterance);
+  });
+}
+
+// Function to add AI character message to chat
+function addAICharacterMessage(text, characterType, characterName) {
+  const bubble = document.createElement("div");
+  bubble.classList.add("message", characterType);
+
+  // Character name
+  const nameDiv = document.createElement("div");
+  nameDiv.className = "character-name";
+  nameDiv.textContent = characterName;
+
+  // Message content
+  const content = document.createElement("div");
+  content.className = "message-text";
+  content.innerHTML = text;
+
+  // Timestamp
+  const timestamp = document.createElement("div");
+  timestamp.className = "timestamp";
+  timestamp.textContent = getTime();
+
+  bubble.appendChild(nameDiv);
+  bubble.appendChild(content);
+  bubble.appendChild(timestamp);
+
+  chatBody.appendChild(bubble);
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+// Function to start AI-to-AI conversation
+async function startAIConversation() {
+  if (aiConversationActive) return;
+
+  aiConversationActive = true;
+  aiConversationCount = 0;
+  aiChatHistory = [];
+
+  // Update button states
+  startAIConversationBtn.disabled = true;
+  stopAIConversationBtn.disabled = false;
+
+  console.log("🎭 Starting AI Girlfriend-Boyfriend Conversation...");
+  
+  // Add a system message
+  const systemMsg = document.createElement("div");
+  systemMsg.style.textAlign = "center";
+  systemMsg.style.padding = "10px";
+  systemMsg.style.color = "#888";
+  systemMsg.style.fontStyle = "italic";
+  systemMsg.textContent = "💑 AI Couple Conversation Started...";
+  chatBody.appendChild(systemMsg);
+  chatBody.scrollTop = chatBody.scrollHeight;
+
+  // Girlfriend starts the conversation
+  const initialMessage = "Hey!";
+  aiChatHistory.push({ role: "user", parts: [{ text: initialMessage }] });
+  addAICharacterMessage(initialMessage, "ai-girlfriend", "Priya (AI Girlfriend)");
+  console.log("💕 Priya:", initialMessage);
+  
+  // Speak the initial message with audio
+  await speakAICharacter(initialMessage, true);
+
+  // Start the conversation loop
+  await continueAIConversation();
+}
+
+// Function to continue the AI conversation
+async function continueAIConversation() {
+  if (!aiConversationActive) {
+    stopAIConversation();
+    return;
+  }
+
+  // Wait a bit before next response
+  await new Promise(resolve => setTimeout(resolve, 2000));
+
+  // Boyfriend responds to the last message (which is from girlfriend as "user")
+  const boyfriendResponse = await getAICharacterResponse(aiBoyfriendPersonality, aiChatHistory);
+  
+  if (!aiConversationActive) return; // Check if stopped during API call
+
+  if (boyfriendResponse) {
+    // Store boyfriend's response as "model" (completing the exchange)
+    aiChatHistory.push({ role: "model", parts: [{ text: boyfriendResponse }] });
+    addAICharacterMessage(boyfriendResponse, "ai-boyfriend", "Arjun (AI Boyfriend)");
+    console.log("💙 Arjun:", boyfriendResponse);
+    
+    // Speak boyfriend's message with audio
+    await speakAICharacter(boyfriendResponse, false);
+    
+    aiConversationCount++;
+
+    // Wait before girlfriend responds
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    if (!aiConversationActive) return;
+
+    // Prepare for girlfriend's response: add boyfriend's message as "user" for her to respond to
+    aiChatHistory.push({ role: "user", parts: [{ text: boyfriendResponse }] });
+    const girlfriendResponse = await getAICharacterResponse(aiGirlfriendPersonality, aiChatHistory);
+
+    if (!aiConversationActive) return;
+
+    if (girlfriendResponse) {
+      // Store girlfriend's response as "model" (completing the exchange)
+      aiChatHistory.push({ role: "model", parts: [{ text: girlfriendResponse }] });
+      addAICharacterMessage(girlfriendResponse, "ai-girlfriend", "Priya (AI Girlfriend)");
+      console.log("💕 Priya:", girlfriendResponse);
+      
+      // Speak girlfriend's message with audio
+      await speakAICharacter(girlfriendResponse, true);
+      
+      aiConversationCount++;
+
+      // Prepare for next boyfriend's response: add girlfriend's message as "user" for him to respond to
+      aiChatHistory.push({ role: "user", parts: [{ text: girlfriendResponse }] });
+
+      // Continue the conversation infinitely
+      if (aiConversationActive) {
+        await continueAIConversation();
+      }
+    } else {
+      stopAIConversation();
+    }
+  } else {
+    stopAIConversation();
+  }
+}
+
+// Function to stop AI-to-AI conversation
+function stopAIConversation() {
+  aiConversationActive = false;
+  
+  // Stop any ongoing speech
+  speechSynthesis.cancel();
+  
+  // Update button states
+  startAIConversationBtn.disabled = false;
+  stopAIConversationBtn.disabled = true;
+
+  console.log(`🛑 AI Conversation stopped after ${aiConversationCount} exchanges.`);
+  
+  // Add a system message
+  const systemMsg = document.createElement("div");
+  systemMsg.style.textAlign = "center";
+  systemMsg.style.padding = "10px";
+  systemMsg.style.color = "#888";
+  systemMsg.style.fontStyle = "italic";
+  systemMsg.textContent = `💑 AI Couple Conversation Ended (${aiConversationCount} exchanges)`;
+  chatBody.appendChild(systemMsg);
+  chatBody.scrollTop = chatBody.scrollHeight;
 }
