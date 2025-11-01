@@ -2,7 +2,7 @@ const micBtn = document.getElementById("mic-btn");
 const sendBtn = document.getElementById("send-btn");
 const textInput = document.getElementById("text-input");
 const chatBody = document.getElementById("chat-body");
-const geminiApiKey = "AIzaSyD8A4O9xKstSYtdlIfKNz78IrhPzxRAGw0"; // Replace if neede
+const geminiApiKey = "AIzaSyADNrz-ES2ja2z9Q1sah8Pbmgve0MOvsec"; // Replace if neede
 
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -158,7 +158,7 @@ async function getGeminiResponseWithRetry(retryCount = 0) {
         body: JSON.stringify({
           system_instruction: { parts: [{ text: systemInstruction }] },
           contents: chatHistory,
-        tools: [{ googleSearch: {} }]
+          tools: [{ googleSearch: {} }]
         })
       }
     );
