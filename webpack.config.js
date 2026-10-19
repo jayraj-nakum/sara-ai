@@ -8,6 +8,7 @@ module.exports = {
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist'),
+    clean: true,
   },
   devServer: {
     static: path.join(__dirname, 'dist'),
@@ -16,10 +17,14 @@ module.exports = {
     hot: true,
   },
   plugins: [
-    new Dotenv(),
+    new Dotenv({
+      safe: true,
+      systemvars: true,
+    }),
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, 'index.html'),
       filename: 'index.html',
+      inject: 'body',
     }),
   ],
 };

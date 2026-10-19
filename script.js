@@ -2,7 +2,7 @@ const micBtn = document.getElementById("mic-btn");
 const sendBtn = document.getElementById("send-btn");
 const textInput = document.getElementById("text-input");
 const chatBody = document.getElementById("chat-body");
-const geminiApiKey = process.env.GEMINI_API_KEY;
+const geminiApiKey = process.env.GEMINI_API_KEY || "AQ.Ab8RN6IdK5FMau2dS4B4r2Q0w1OIe3Gnq0xg7P_-Ut3Ds_OLvg";
 
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
