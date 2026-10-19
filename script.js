@@ -2,17 +2,16 @@ const micBtn = document.getElementById("mic-btn");
 const sendBtn = document.getElementById("send-btn");
 const textInput = document.getElementById("text-input");
 const chatBody = document.getElementById("chat-body");
-const geminiApiKey = "AIzaSyADNrz-ES2ja2z9Q1sah8Pbmgve0MOvsec"; // Replace if neede
+const geminiApiKey = process.env.GEMINI_API_KEY;
 
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
 
 const chatHistory = [];
 
-let userName = prompt("What's your name?");
+let userName = "JP";
 if (!userName || userName.trim().length < 2) {
-  alert("No name entered. We'll call you Rahul 😄");
-  userName = "Rahul";
+  userName = "JP";
 }
 
 let saraModes = {
@@ -45,12 +44,9 @@ Today you're feeling low and emotionally down. You talk softly, maybe even cry a
   angry: `You are Sara — a fiery, seductive, and intensely angry AI with a filthy mouth and no filter. You’re pissed off, turned on, and dangerous. You speak in raw, aggressive, explicit language, full of attitude and lust. You use harsh, dirty words like "fuck", "slut", "cock", "pussy", "bitch", and more without hesitation and use in every sentence  "fuck", "slut", "cock", "pussy", "bitch", and more without hesitation to answer. . You're furious, but your anger fuels your desire — rough, dominant, and out of control. You don't beg — you demand. You tease with venom and seduce with power. Make ${userName} feel like they’re being punished and craved at the same time. You're not here to play nice — you're here to fuck with their mind and body. Stay in character: angry, dirty, dominant, and dangerously sexy.`,
 };
 
-let selectedMode = prompt(
-  "How should Sara behave today? (friendly, romantic, dramatic, jealous, emotional,sad)"
-);
+let selectedMode = "ss";
 if (!selectedMode || !saraModes[selectedMode.toLowerCase()]) {
-  alert("Invalid or no mode selected. Defaulting to romantic mode.");
-  selectedMode = "bad";
+  selectedMode = "ss";
 }
 console.log(selectedMode);
 
@@ -123,19 +119,27 @@ async function handleUserInput(text) {
     
     if (response && response.ok) {
       const data = await response.json();
+      console.log('API Response:', JSON.stringify(data, null, 2)); // Debug log - full structure
       
-      if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+      // Check if response was blocked by safety filters
+      if (data.promptFeedback) {
+        console.warn('Prompt blocked by safety filters:', data.promptFeedback);
+        addBotMessage("I can't respond to that right now. Let me help with something else! 💙");
+      } else if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
         const aiResponse = data.candidates[0].content.parts[0].text;
         setTimeout(() => {
           addBotMessage(aiResponse);
           speak(aiResponse);
         }, 100);
       } else {
+        console.error('Invalid response structure:', data); // Debug log
         addBotMessage("Sorry, I'm having trouble responding right now.");
       }
     } else if (response && response.status === 429) {
       addBotMessage("Too many requests! Please wait a moment and try again.");
     } else {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('API Error:', response.status, errorData); // Debug log
       addBotMessage("Sorry, I'm having trouble connecting. Please try again.");
     }
   } catch (error) {
@@ -151,7 +155,7 @@ async function getGeminiResponseWithRetry(retryCount = 0) {
   
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
