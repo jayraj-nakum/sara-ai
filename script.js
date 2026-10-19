@@ -159,7 +159,7 @@ async function getGroqResponseWithRetry(retryCount = 0) {
           "Authorization": `Bearer ${groqApiKey}`
         },
         body: JSON.stringify({
-          model: "openai/gpt-oss-20b",
+          model: "openai/gpt-oss-120b",
           messages: [
             {
               role: "system",
