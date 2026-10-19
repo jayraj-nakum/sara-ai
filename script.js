@@ -2,7 +2,7 @@ const micBtn = document.getElementById("mic-btn");
 const sendBtn = document.getElementById("send-btn");
 const textInput = document.getElementById("text-input");
 const chatBody = document.getElementById("chat-body");
-const geminiApiKey = process.env.GEMINI_API_KEY || "AQ.Ab8RN6IdK5FMau2dS4B4r2Q0w1OIe3Gnq0xg7P_-Ut3Ds_OLvg";
+const groqApiKey = localStorage.getItem('GROQ_API_KEY') || prompt('Enter your Groq API Key:');
 
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -112,34 +112,30 @@ async function handleUserInput(text) {
   const loadingId = addLoadingMessage();
   
   try {
-    const response = await getGeminiResponseWithRetry();
+    const response = await getGroqResponseWithRetry();
     
     // Remove loading message
     removeLoadingMessage(loadingId);
     
     if (response && response.ok) {
       const data = await response.json();
-      console.log('API Response:', JSON.stringify(data, null, 2)); // Debug log - full structure
+      console.log('Groq Response:', JSON.stringify(data, null, 2));
       
-      // Check if response was blocked by safety filters
-      if (data.promptFeedback) {
-        console.warn('Prompt blocked by safety filters:', data.promptFeedback);
-        addBotMessage("I can't respond to that right now. Let me help with something else! 💙");
-      } else if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
-        const aiResponse = data.candidates[0].content.parts[0].text;
+      if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
+        const aiResponse = data.choices[0].message.content;
         setTimeout(() => {
           addBotMessage(aiResponse);
           speak(aiResponse);
         }, 100);
       } else {
-        console.error('Invalid response structure:', data); // Debug log
+        console.error('Invalid response structure:', data);
         addBotMessage("Sorry, I'm having trouble responding right now.");
       }
     } else if (response && response.status === 429) {
       addBotMessage("Too many requests! Please wait a moment and try again.");
     } else {
       const errorData = await response.json().catch(() => ({}));
-      console.error('API Error:', response.status, errorData); // Debug log
+      console.error('API Error:', response.status, errorData);
       addBotMessage("Sorry, I'm having trouble connecting. Please try again.");
     }
   } catch (error) {
@@ -149,20 +145,33 @@ async function handleUserInput(text) {
   }
 }
 
-async function getGeminiResponseWithRetry(retryCount = 0) {
+async function getGroqResponseWithRetry(retryCount = 0) {
   const maxRetries = 3;
   const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
   
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
+      "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${groqApiKey}`
+        },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemInstruction }] },
-          contents: chatHistory,
-          tools: [{ googleSearch: {} }]
+          model: "openai/gpt-oss-20b",
+          messages: [
+            {
+              role: "system",
+              content: systemInstruction
+            },
+            ...chatHistory.map(msg => ({
+              role: msg.role,
+              content: msg.parts[0].text
+            }))
+          ],
+          temperature: 0.7,
+          max_tokens: 1024,
         })
       }
     );
@@ -170,7 +179,7 @@ async function getGeminiResponseWithRetry(retryCount = 0) {
     if (response.status === 429 && retryCount < maxRetries) {
       console.log(`Rate limited. Retrying in ${delay}ms... (Attempt ${retryCount + 1}/${maxRetries})`);
       await new Promise(resolve => setTimeout(resolve, delay));
-      return getGeminiResponseWithRetry(retryCount + 1);
+      return getGroqResponseWithRetry(retryCount + 1);
     }
 
     return response;
@@ -178,7 +187,7 @@ async function getGeminiResponseWithRetry(retryCount = 0) {
     if (retryCount < maxRetries) {
       console.log(`Network error. Retrying in ${delay}ms... (Attempt ${retryCount + 1}/${maxRetries})`);
       await new Promise(resolve => setTimeout(resolve, delay));
-      return getGeminiResponseWithRetry(retryCount + 1);
+      return getGroqResponseWithRetry(retryCount + 1);
     }
     throw error;
   }
@@ -231,7 +240,7 @@ function addUserMessage(text) {
 }
 
 function addBotMessage(text) {
-  chatHistory.push({ role: "model", parts: [{ text }] });
+  chatHistory.push({ role: "assistant", parts: [{ text }] });
   const bubble = createMessageBubble(text, "bot");
   chatBody.appendChild(bubble);
   chatBody.scrollTop = chatBody.scrollHeight;
