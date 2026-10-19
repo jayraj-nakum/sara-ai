@@ -2,7 +2,7 @@ const micBtn = document.getElementById("mic-btn");
 const sendBtn = document.getElementById("send-btn");
 const textInput = document.getElementById("text-input");
 const chatBody = document.getElementById("chat-body");
-const openRouterApiKey = localStorage.getItem('OPENROUTER_API_KEY') || prompt('Enter your OpenRouter API Key:');
+const groqApiKey = localStorage.getItem('GROQ_API_KEY') || prompt('Enter your Groq API Key:');
 
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -112,14 +112,14 @@ async function handleUserInput(text) {
   const loadingId = addLoadingMessage();
   
   try {
-    const response = await getOpenRouterResponseWithRetry();
+    const response = await getGroqResponseWithRetry();
     
     // Remove loading message
     removeLoadingMessage(loadingId);
     
     if (response && response.ok) {
       const data = await response.json();
-      console.log('OpenRouter Response:', JSON.stringify(data, null, 2));
+      console.log('Groq Response:', JSON.stringify(data, null, 2));
       
       if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
         const aiResponse = data.choices[0].message.content;
@@ -145,23 +145,21 @@ async function handleUserInput(text) {
   }
 }
 
-async function getOpenRouterResponseWithRetry(retryCount = 0) {
+async function getGroqResponseWithRetry(retryCount = 0) {
   const maxRetries = 3;
   const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
   
   try {
     const response = await fetch(
-      "https://openrouter.ai/api/v1/chat/completions",
+      "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${openRouterApiKey}`,
-          "HTTP-Referer": "https://github.com/jayraj-nakum/sara-ai",
-          "X-Title": "Sara AI Friend"
+          "Authorization": `Bearer ${groqApiKey}`
         },
         body: JSON.stringify({
-          model: "nvidia/nemotron-3-super-120b-a12b:free",
+          model: "openai/gpt-oss-120b",
           messages: [
             {
               role: "system",
@@ -181,7 +179,7 @@ async function getOpenRouterResponseWithRetry(retryCount = 0) {
     if (response.status === 429 && retryCount < maxRetries) {
       console.log(`Rate limited. Retrying in ${delay}ms... (Attempt ${retryCount + 1}/${maxRetries})`);
       await new Promise(resolve => setTimeout(resolve, delay));
-      return getOpenRouterResponseWithRetry(retryCount + 1);
+      return getGroqResponseWithRetry(retryCount + 1);
     }
 
     return response;
@@ -189,7 +187,7 @@ async function getOpenRouterResponseWithRetry(retryCount = 0) {
     if (retryCount < maxRetries) {
       console.log(`Network error. Retrying in ${delay}ms... (Attempt ${retryCount + 1}/${maxRetries})`);
       await new Promise(resolve => setTimeout(resolve, delay));
-      return getOpenRouterResponseWithRetry(retryCount + 1);
+      return getGroqResponseWithRetry(retryCount + 1);
     }
     throw error;
   }
